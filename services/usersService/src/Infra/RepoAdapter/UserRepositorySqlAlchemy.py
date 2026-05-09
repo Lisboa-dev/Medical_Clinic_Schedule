@@ -1,7 +1,8 @@
 from sqlalchemy.orm import Session
 from sqlalchemy import select
-from ..Config.db.liteSql.liteSql import get_query  # função que retorna Session ou contexto
-from ..Models.UserSqlSchamy import Usuario  # seu modelo de usuário
+from ..Config.db.liteSql.liteSql import get_query
+from ..Config.db.liteSql.liteSql import get_command# função que retorna Session ou contexto
+from ..Models.sqlAlchemy.UserSqlSchamy import Usuario  # seu modelo de usuário
 
 class UserRepository:
     

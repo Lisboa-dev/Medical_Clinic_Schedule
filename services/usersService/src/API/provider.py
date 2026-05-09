@@ -1,6 +1,6 @@
 
 from ..Modules.User.Aplication.UseCases import createUseCase, deleteUseCase, detailUseCase, listUseCase, updateUseCase
-from ..Infra .RepoAdapter.UserRepository import UserRepository
+from ..Infra.RepoAdapter.UserRepositorySqlAlchemy import UserRepository
 
 #uma formM
 '''

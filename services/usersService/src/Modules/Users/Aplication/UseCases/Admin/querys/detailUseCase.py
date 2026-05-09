@@ -1,4 +1,4 @@
-from ...Repository.iAgendaRepository import IUserRepository 
+from Users.Ports.Repository.iAgendaRepository import IRepository 
 from ...Domain.Entities.userEntity import  User
 class DetailUserUseCase:
 
