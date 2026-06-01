@@ -1,55 +1,43 @@
-from src.Modules.Agenda.Domain.Policies.Clinic.baseRuleClinic import BaseRuleClinic
-from src.Modules.Agenda.Domain.Policies.Room.baseRuleRoom import BaseRuleRoom
-from src.Modules.Agenda.Domain.ValueObjects.id import ID
-from src.Modules.Agenda.Domain.ValueObjects.rangeTime import RangeTime
-from ..services.engineAvailability import engine_availability_room
-from ..ValueObjects.domainEvents import DomainEvents
+from src.modules.agenda.domain.entities.Appointment import Appointment
+from src.modules.agenda.domain.rules.BaseRule import BaseRule
+from src.modules.agenda.domain.services import VerifyInRange
+from src.modules.agenda.domain.valueObjects.Id import ID
+from src.modules.agenda.domain.valueObjects.RangeTime import RangeTime
+
 
 
 class Room:
     id: ID
     name: str
     availability: bool
-    rules: list[BaseRuleRoom]
-    rulesClinic: list[BaseRuleClinic]
-    # o timeOcupped e uma matriz relacionando dia e horarios ocupados
-    timeOcupped: list[int][RangeTime]
-    hoursDisponibility: list[int][RangeTime]
-    appointmentList_id: list[int][str]
-    _events: list[DomainEvents]
+    status: str
+    rules: list[BaseRule]
+    appointmentList: list[Appointment]
+  
     
-    def __init__(self, name: str, disponibility: bool, rules: list[BaseRuleRoom]):
+    def __init__(self, name: str,rules: list[BaseRule], disponibility: bool = True, id:str = None):
         self.name = name
         self.disponibility = disponibility
         self.rules = rules
-    
+        self.id = ID.generate_id()  if id==None else ID(id)
+        
     def verifyDisponibility(self, time: RangeTime) -> bool:
-        if not self.disponibility:
+        if self.availability:
             return False
         
-        for rule in self.rules:
-            if not rule.isSatisfied(time):
-                return False
-        
-        for ocuppied in self.timeOcupped:
-            if ocuppied.overlaps(time):
-                return False
-        
-        self.addOcuppiedTime(BaseRuleRoom(time))
+         
+        if VerifyInRange.execute(time, self.rules):
+            for appointment in self.appointmentList:
+                if appointment.verifyOverleaps(time):
+                    return False
+        else:
+            return False
         
         return True
     
    
-    def hoursDisponibility(self) -> list[RangeTime]:
-        disponibility_hours = []
-        for rule in self.rules:
-            disponibility_hours.extend(rule.hoursDisponibility())
-        
-        return disponibility_hours
        
-    
-    def addOcuppiedTime(self, time: BaseRuleRoom):
-        self.timeOcupped.append(time)
+
         
     @property
     def disponibility(self):

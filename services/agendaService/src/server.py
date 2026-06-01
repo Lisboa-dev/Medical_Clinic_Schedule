@@ -4,7 +4,7 @@ from src.API.Controllers.AgendaController import routerAgenda
 app = FastAPI(
     title="Agenda Service",
     version="1.0.0",
-    description="CRUD de agendamento"
+    description="serviço de agendamento de consultas médicas"
 )
 
 app.include_router(routerAgenda)

@@ -4,15 +4,15 @@ class ID:
 
     id: str
 
-    def __init__(self):
-        self.id = ID.generate_id()
+    def __init__(self, id: str):
+        self.id = id
         
     def __str__(self):
         return self.id
     
     @staticmethod
     def generate_id():
-        return str(uuid.uuid4())
+        return ID(str(uuid.uuid4()))
     
     def compare(self, other_id):
         if isinstance(other_id, ID):

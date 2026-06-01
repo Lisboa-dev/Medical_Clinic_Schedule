@@ -1,53 +1,50 @@
-from src.Modules.Agenda.Domain.Entities.calendar import Calendar 
-from src.Modules.Agenda.Aplication.Ports.Repository.IAgendaRepository import IAgendaRepository
-from src.Modules.Agenda.Aplication.Ports.Repository.ICalendarData import ICalendarData
-from src.Modules.Agenda.Aplication.DTOs.output.calendar.createCalendarResponse import ResponseCreateCalendarDTO
+
+from src.modules.agenda.aplication.ports.events.BusPort import BusPort
+from src.modules.agenda.aplication.ports.externServices.CalendarDataPort import CalendarDataPort
+from src.modules.agenda.aplication.ports.repository import RuleRepositoryPoty
+from src.modules.agenda.aplication.ports.repository.CalendarRepositoryPort import CalendarRepositoryPort
+from src.modules.agenda.domain.entities import Day
 
 
-class CreateCalendar:
+class CreateCalendarUseCase:
     
-    def __init__(self, repository: IAgendaRepository, baseData: ICalendarData
+    def __init__(
+        self, 
+        repositoryCalendar: CalendarRepositoryPort, 
+        repositoryRule: RuleRepositoryPoty,
+        baseData: CalendarDataPort, 
+        bus: BusPort
 ):
-        self._repository = repository
-        self._baseData = baseData
-
-    def execute(self, calandaryCommand: dict):
-       data = self._baseData.pullData(calandaryCommand['ano'])
-       policys: list[int]
-       try:
-           policys = self._repository.findAllPolicys()
-       except Exception as e:
-             raise Exception("=: " + str(e))
-         
-       policys = PolicyToDomainMapper.map(policys)
         
-       calendar = Calendar(policys)
+        self._repositoryCalendar = repositoryCalendar
+        self._repositoryRule = repositoryRule
+        self._baseData = baseData
+        self_bus = bus
 
-       action = calendar.createSlots(data)
-       responseDays = [ResponseCreateCalendarDTO]
-       
-       if action == True:
-           try:
-               days= calendar.getCalendar()
-               self._repository.create(days)
-               
-               for day in days:
-                     response = ResponseCreateCalendarDTO()
-                     response.id = day.id
-                     response.availability = day.isAvailable
-                     response.weekDay = day.weekday
-                     response.date = day.date
-                     
-                     responseDays.append(response)
-                   
-           except Exception as e:
-               raise Exception("Erro ao criar calendário: " + str(e))
-           
-           
-           
-       
-           
-       return {"days": responseDays}
+
+    async def execute(self, command: CreateCalendarCommand):
+        try:
+            data = await self._baseData.mont(command.day, command.ano)
+            rules = await self._repositoryRule.getDayRules()
+            
+            if(data and rules):
+                
+                for d in data:
+                    
+                    try:
+                        day = Day(**d)
+                        day.addRules(rules)
+                        await self._repository.save(day)
+                    except:
+                        await self._repository.delete(d['ano'])
+                        raise Exception("error ao criar day", d)
+                await self._bus.publish()
+                return True
+            
+        except Exception as e:
+            await self._repository.delete(command.ano)
+            raise Exception("error ao criar day", command)
+      
    
        
     

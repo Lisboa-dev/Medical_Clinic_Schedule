@@ -1,12 +1,19 @@
-from src.Modules.Agenda.Domain.Policies.Patient.baseRulePatient import BaseRulePatient
+
+
+from src.modules.agenda.domain.valueObjects.Id import ID
 
 
 class Patient:
-    id: int
+    id: ID
     name: str
+    appoiments: list[str]
+   
 
 
-    def __init__(self, id: int, name: str, rules: list[int]= []):
-        self.id = id
+    def __init__(self, id: str, name: str):
+        self.id = ID(id)
         self.name = name
+        
+    def add_appoiment(self, appoiment: str):
+        self.appoiments.append(appoiment)
  

@@ -1,4 +1,5 @@
-from datetime import datetime, time
+from curses import tigetstr
+from datetime import datetime, time, timedelta
 
 
 class RangeTime:
@@ -18,6 +19,8 @@ class RangeTime:
             raise ValueError(
                 "start_time must be lower than end_time"
             )
+
+
 
     def _validate_time(self, value: str) -> time:
         try:
@@ -66,4 +69,15 @@ class RangeTime:
             self.start_time < end_obj
             and
             self.end_time > start_obj
+        )
+        
+    @staticmethod
+    def generate(time_str: str, duration: int) -> 'RangeTime':
+       
+        start = datetime.strptime(time_str, "%H:%M")
+        end = start + timedelta(minutes=duration)
+
+        return RangeTime(
+            start.strftime("%H:%M"),
+            end.strftime("%H:%M")
         )
