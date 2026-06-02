@@ -12,7 +12,7 @@ class GenericRule(BaseRule):
         targetType: TargetType,
         rangeTime: RangeTime,
         description: str ,
-        nome:str = None,
+        nome: str | None = None,
         
     ):
         super().__init__(

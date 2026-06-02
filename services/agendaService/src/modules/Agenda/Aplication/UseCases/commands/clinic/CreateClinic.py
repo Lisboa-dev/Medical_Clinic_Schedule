@@ -3,6 +3,8 @@
 
 
 from src.modules.agenda.aplication.dtos.useCase.command.ClinicUseCasesDTO import CreateClinicCommand
+from src.modules.agenda.aplication.dtos.exceptions import CreateUseCaseException
+from src.modules.agenda.aplication.events.ClinicEvent import CreateClinicEvent
 from src.modules.agenda.aplication.ports.events.BusPort import BusPort
 from src.modules.agenda.aplication.ports.repository import ClinicRepositoryPort
 from src.modules.agenda.domain.entities import Clinic
@@ -17,9 +19,15 @@ class CreateClinicUseCase:
     async def execute(self, command:CreateClinicCommand):
         # Lógica para criar um administrador
         try:
-         clinic = Clinic(command.data)
+         clinic = Clinic(name=command.name, rules=command.rules)
          await self._repository.save(clinic)
-         self._bus.emit()
+         self._bus.emit(CreateClinicEvent(clinic))
         except Exception as e:
-            raise ("Exception in creating clinic: ", e)
+            raise CreateUseCaseException(
+                code="CREATE_CLINIC_ERROR",
+                message="Error creating clinic",
+                use_case=self.__class__.__name__,
+                context={"command": command.model_dump() if hasattr(command, "model_dump") else str(command)},
+                original=e,
+            ) from e
         return True

@@ -1,11 +1,20 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
 
 
-class CreateDoctorCommand(BaseModel):
-    
-class UpdateDoctorCommand(BaseModel):
-    
-class DeleteDoctorCommand(BaseModel):
-    
+@dataclass(frozen=True)
+class CreateDoctorCommand:
+    id_extern: str
+    name: str
+
+@dataclass(frozen=True)
+class UpdateDoctorCommand:
+    id: str
+    name: str | None = None
+    availability: bool | None = None
+    rules: list | None = None
+
+@dataclass(frozen=True)
+class DeleteDoctorCommand:
+    id: str

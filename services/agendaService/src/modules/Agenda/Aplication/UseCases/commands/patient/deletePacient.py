@@ -3,9 +3,9 @@
 
 
 
+from src.modules.agenda.aplication.events.PatientEvent import DeletePatientEvent
 from src.modules.agenda.aplication.ports.events.BusPort import BusPort
 from src.modules.agenda.aplication.ports.repository import PatientRepositoryPort
-from src.modules.agenda.domain.entities.Patient import Patient
 
 
 class DeletePatientUseCase:
@@ -17,14 +17,12 @@ class DeletePatientUseCase:
         try:
             
             pacient = await self._repository.getPacient(id)
-            if not isinstance(pacient, Patient):
-              raise Exception("Paciente não encontrado")
+            if not pacient:
+                return False
             
-            if pacient.destroy():
-                await self._repository.delete(id)
-                return True 
-            
-            self._bus.emit()
+            await self._repository.delete(id)
+            self._bus.emit(DeletePatientEvent(id))
+            return True
             
         except Exception as e:
             return False

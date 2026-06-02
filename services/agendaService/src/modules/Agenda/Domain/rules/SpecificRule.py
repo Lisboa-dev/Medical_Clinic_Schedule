@@ -13,7 +13,7 @@ class SpecificRule(BaseRule):
         target: str,
         rangeTime: RangeTime,
         description: str,
-        nome:str = None
+        nome: str | None = None
     ):
         super().__init__(
             ruleEffect=ruleEffect,

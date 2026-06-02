@@ -1,13 +1,12 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class AppointmentSchedulingInputDTO(BaseModel):
-        patient: str
-        doctor: str
-        room: str
-        type: str
-        time: str
-        date: str
-        weekday: str
-      
-     
+@dataclass(frozen=True)
+class AppointmentSchedulingInputDTO:
+    patient: str
+    doctor: str
+    type: str
+    time: str
+    date: str
+    weekday: str
+    room: str | None = None

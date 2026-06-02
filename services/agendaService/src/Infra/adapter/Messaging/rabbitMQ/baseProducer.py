@@ -1,6 +1,7 @@
 # infra/rabbitmq/publisher.py
 
 import json
+import aio_pika
 
 class EventPublisher:
 

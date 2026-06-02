@@ -1,18 +1,19 @@
-class CreateCalendarEvents:
-    def __init__(self, repository: CalendarRepositoryPort, bus: BusPort):
-        self._repository = repository
-        self._bus = bus
-        
-    
-    
+from dataclasses import dataclass
+
+from src.modules.agenda.domain.entities import Day
+
+
+@dataclass(frozen=True)
 class CreateCalendarEvent:
-    def __init__(self, doctor: str, date: str):
-        self.doctor = doctor
-        self.date = date
-        
-        
-        
+    days: list[Day]
+    year: str
+
+
+@dataclass(frozen=True)
+class UpdateDayEvent:
+    day: Day
+
+
+@dataclass(frozen=True)
 class DeleteCalendarEvent:
-    def __init__(self, doctor: str, date: str):
-        self.doctor = doctor
-        self.date = date
+    year: str

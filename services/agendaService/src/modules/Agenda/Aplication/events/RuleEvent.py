@@ -1,18 +1,33 @@
-class DeleteRuleEvent:
-    def __init__(self, id: str):
-        self.id = id
-        
-        
+from dataclasses import dataclass
+
+from src.modules.agenda.domain.rules import BaseRule
+
+
+@dataclass(frozen=True)
 class CreateBlockRuleEvent:
-    def __init__(self, doctor: str, day: str, time: str):
-        self.doctor = doctor
-        self.day = day
-        self.time = time
-        
-        
-class CreateRuleEvent:
-    def __init__(self, ruleEffect: str, idToManager: str, rangeTime: str, description: str):
-        self.ruleEffect = ruleEffect
-        self.idToManager = idToManager
-        self.rangeTime = rangeTime
-        self.description = description
+    rule: BaseRule
+
+
+@dataclass(frozen=True)
+class CreateGenericRuleEvent:
+    rule: BaseRule
+
+
+@dataclass(frozen=True)
+class CreateSpecificEntityRuleEvent:
+    rule: BaseRule
+
+
+@dataclass(frozen=True)
+class CreateSpecificRuleEvent:
+    rule: BaseRule
+
+
+@dataclass(frozen=True)
+class CreateWeekRuleEvent:
+    rule: BaseRule
+
+
+@dataclass(frozen=True)
+class DeleteRuleEvent:
+    rule_id: str

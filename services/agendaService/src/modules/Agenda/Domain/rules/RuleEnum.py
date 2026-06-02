@@ -1,9 +1,5 @@
 from enum import Enum
 
-
-
-from enum import Enum
-
 class RuleEffect(Enum):
     BLOCK = ("BLOCK", 0)
     ADD = ("ADD", 2)
@@ -15,6 +11,8 @@ class RuleEffect(Enum):
         obj._value_ = value
         obj.priority = priority
         return obj
+
+    priority: int
 
     def __str__(self):
         return self.value

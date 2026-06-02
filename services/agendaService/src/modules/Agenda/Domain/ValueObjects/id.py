@@ -1,11 +1,12 @@
 import uuid
+from src.modules.agenda.domain.exceptions import InvalidIdComparisonException
 
 class ID:
 
     id: str
 
-    def __init__(self, id: str):
-        self.id = id
+    def __init__(self, id: str | None = None):
+        self.id = id or str(uuid.uuid4())
         
     def __str__(self):
         return self.id
@@ -20,4 +21,7 @@ class ID:
         elif isinstance(other_id, str):
             return self.id == other_id
         else:
-            raise ValueError("Invalid ID type for comparison")
+            raise InvalidIdComparisonException(
+                "Invalid ID type for comparison",
+                {"other_id_type": type(other_id).__name__},
+            )

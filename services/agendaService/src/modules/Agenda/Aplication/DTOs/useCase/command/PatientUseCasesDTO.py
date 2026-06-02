@@ -1,10 +1,18 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
 
 
-class CreatePatientCommand(BaseModel):
-    
-class UpdatePatientCommand(BaseModel):
-    
-class DeletePatientCommand(BaseModel):
+@dataclass(frozen=True)
+class CreatePatientCommand:
+    id: str
+    name: str
+
+@dataclass(frozen=True)
+class UpdatePatientCommand:
+    id: str
+    name: str | None = None
+
+@dataclass(frozen=True)
+class DeletePatientCommand:
+    id: str

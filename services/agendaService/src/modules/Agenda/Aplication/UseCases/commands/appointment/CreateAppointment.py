@@ -1,6 +1,6 @@
-from binascii import Error
-
+from src.modules.agenda.aplication.dtos.exceptions import CreateUseCaseException
 from src.modules.agenda.aplication.dtos.repositorys.input import AppointmentSchedulingInputDTO
+from src.modules.agenda.aplication.events.AppointmentEvent import CreateAppointmentEvent
 from src.modules.agenda.aplication.ports.events.BusPort import BusPort
 from src.modules.agenda.aplication.ports.repository.AppointmentRepositoryPort import AppointmentRepositoryPort
 from src.modules.agenda.aplication.ports.repository.AppointmentSchedulingRepositoryPort import AppointmentSchedulingRepositoryPort
@@ -8,7 +8,7 @@ from src.modules.agenda.aplication.dtos.useCase.command.AppointmentUseCasesDTO i
 from src.modules.agenda.domain.entities import Appointment
 
 
-class CreateAppoimentUseCase:
+class CreateAppointmentUseCase:
     def __init__(self, repositoryAppointment: AppointmentRepositoryPort, repositorySchedulingContext: AppointmentSchedulingRepositoryPort, bus: BusPort):
         self._repositoryAppointment = repositoryAppointment
         self._repositorySchedulingContext = repositorySchedulingContext
@@ -24,15 +24,16 @@ class CreateAppoimentUseCase:
                     weekday=command.weekday, 
                     doctor=command.doctor, 
                     patient=command.patient, 
+                    room=command.room,
                     time=command.time,
                     type=command.type,
                 )
             )
             
             appointment = Appointment.create(
-                patient=command.patient,
-                doctor=command.doctor,
-                room=command.room,
+                patient=context.patient,
+                doctor=context.doctor,
+                rooms=context.room,
                 day=context.day,
                 time=context.time,
                 type=context.type
@@ -40,11 +41,17 @@ class CreateAppoimentUseCase:
            
             if isinstance(appointment, Appointment):
                 await self._repositoryAppointment.save(appointment, command.scheduler_id)
-                await self._bus.publish() #criar classe de evento
+                self._bus.emit(CreateAppointmentEvent(appointment))
                 return True
             
             
         except Exception as e:
-            raise Exception("error ao criar Appointment", command)
+            raise CreateUseCaseException(
+                code="CREATE_APPOINTMENT_ERROR",
+                message="Error creating appointment",
+                use_case=self.__class__.__name__,
+                context={"command": command.model_dump() if hasattr(command, "model_dump") else str(command)},
+                original=e,
+            ) from e
       
     

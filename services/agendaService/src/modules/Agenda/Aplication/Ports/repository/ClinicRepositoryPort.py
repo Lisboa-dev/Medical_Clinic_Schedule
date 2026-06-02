@@ -1,12 +1,16 @@
 from abc import ABC, abstractmethod
+from typing import Any
 class ClinicRepositoryPort(ABC):
     
     @abstractmethod
-    def save(self, clinic) -> None:
+    async def save(self, clinic: Any) -> None:
         pass
     
-    def update(self, clinic) -> None:
+    async def update(self, clinic: Any) -> None:
         pass 
     
-    def delete(self, id:str) -> None:
+    async def delete(self, id: str) -> None:
+        pass
+
+    async def getClinic(self, clinic_id: str) -> Any:
         pass

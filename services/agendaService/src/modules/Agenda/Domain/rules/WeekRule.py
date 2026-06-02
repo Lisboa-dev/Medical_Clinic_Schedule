@@ -11,9 +11,9 @@ class WeekRule(BaseRule):
         rangeTime: RangeTime,
         description: str,
         weekday: int,
-        target:str= None,
-        targetType: TargetType = None,
-        nome:str = None
+        target: str | None = None,
+        targetType: TargetType | None = None,
+        nome: str | None = None
     ):
         super().__init__(
             ruleEffect=ruleEffect,

@@ -1,10 +1,19 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
 
 
-class CreateRoomCommand(BaseModel):
-    
-class UpdateRoomCommand(BaseModel):
-    
-class DeleteRoomCommand(BaseModel):
+@dataclass(frozen=True)
+class CreateRoomCommand:
+    name: str
+
+@dataclass(frozen=True)
+class UpdateRoomCommand:
+    id: str
+    name: str | None = None
+    disponibility: bool | None = None
+    rules: list | None = None
+
+@dataclass(frozen=True)
+class DeleteRoomCommand:
+    id: str

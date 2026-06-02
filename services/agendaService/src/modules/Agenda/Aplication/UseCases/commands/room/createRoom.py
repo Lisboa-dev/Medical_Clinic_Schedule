@@ -1,4 +1,6 @@
-from src.Modules.Agenda.Domain.Entities.room import Room
+from src.modules.agenda.domain.entities.Room import Room
+from src.modules.agenda.aplication.dtos.exceptions import CreateUseCaseException
+from src.modules.agenda.aplication.events.RoomEvent import CreateRoomEvent
 from src.modules.agenda.aplication.ports.events.BusPort import BusPort
 from src.modules.agenda.aplication.ports.repository.RoomRepositoryPort import RoomRepositoryPort
 
@@ -14,7 +16,15 @@ class CreateRoomUseCase:
             room = Room(name=name, rules=rules)
             if isinstance(room,Room):
              await self._repository.save(room) 
+             self._bus.emit(CreateRoomEvent(room))
              return True
+            return False
         
         except Exception as e:
-            return Exception("error ao criar ", e)
+            raise CreateUseCaseException(
+                code="CREATE_ROOM_ERROR",
+                message="Error creating room",
+                use_case=self.__class__.__name__,
+                context={"name": name},
+                original=e,
+            ) from e

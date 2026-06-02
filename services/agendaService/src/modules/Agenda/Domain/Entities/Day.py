@@ -1,10 +1,8 @@
-
-from dataclasses import dataclass
 from src.modules.agenda.domain.entities.Room import Room
 from src.modules.agenda.domain.services import VerifyInRange
 from src.modules.agenda.domain.valueObjects import Date
 from src.modules.agenda.domain.valueObjects.RangeTime import RangeTime
-from src.modules.agenda.domain.valueObjects.EnumDay import DayStatus, DayStatus
+from src.modules.agenda.domain.valueObjects.EnumDay import DayStatus
 from ..rules.BaseRule import BaseRule
 
 class Day:
@@ -19,20 +17,28 @@ class Day:
         rules: list[BaseRule],
     ):
 
-        self._rooms = rooms
+        self._rooms = rooms or []
         self._date = date
         self._availability = availability
         
         self._weekday = weekday
         self._status = status
         self._id = date
-        self._rules = rules
+        self._rules = rules or []
+        self._events: list[object] = []
+        self.appointmentList_id: list[int] = []
        
         
-   
-    
+    def update(self, rooms: list[Room] | dict):
+        if isinstance(rooms, dict):
+            self._availability = bool(rooms.get("availability", self._availability))
+            self._status = rooms.get("status", self._status)
+            return self
+        self._rooms = rooms
+        return self
+ 
     def updateState(self, newStatus: DayStatus):
-        self.status = newStatus
+        self._status = newStatus
         self.addEvent("objeto de evento")
         
     def createExceptions(self, exceptions: list[RangeTime]):
@@ -50,10 +56,10 @@ class Day:
 
     
     def verifyInDisponibility(self, time: RangeTime) -> bool:
-        if self.availability:
+        if not self._availability:
             return False
      
-        return VerifyInRange.execute(time, self.rules)
+        return VerifyInRange.execute(time, self._rules)
 
         
         
@@ -62,10 +68,10 @@ class Day:
     
     @staticmethod
     def selfCreate(
-        room_id: int ,
+        rooms: list[Room],
         date: Date,
         weekday: int,
-        availability: int,
+        availability: bool,
         status: DayStatus,
         rules: list[BaseRule],
     ) -> 'Day':
@@ -77,30 +83,30 @@ class Day:
               availability = False
               status = DayStatus.HOLIDAY
               return Day(
-                    room_id=room_id,
+                    rooms=rooms,
                     date=date,
                     weekday=weekday,
                     availability=availability,
                     status=status,
-                    rules=[].append(rule)
+                    rules=[rule]
                 )
               
           if(rule.date == None and rule.weekday == weekday and rule.rangeTime == None):
               availability = False
               status = DayStatus.HOLIDAY
               return Day(
-                    room_ids=room_id,
+                    rooms=rooms,
                     date=date,
                     weekday=weekday,
                     availability=availability,
                     status=status,
-                    rules=[].append(rule)
+                    rules=[rule]
                 )
        
     
         
         obj =Day(
-            room_id=room_id,
+            rooms=rooms,
             date=date,
             weekday=weekday,
             availability=availability,
@@ -113,8 +119,35 @@ class Day:
         
     
     
-    def addEvent(self, event: Event):
+    def addRules(self, rules: list[BaseRule]):
+        self._rules.extend(rules)
+
+    def addEvent(self, event):
         self._events.append(event)
+
+    @property
+    def rooms(self) -> list[Room]:
+        return self._rooms
+
+    @property
+    def date(self) -> Date:
+        return self._date
+
+    @property
+    def weekday(self) -> int:
+        return self._weekday
+
+    @property
+    def availability(self) -> bool:
+        return self._availability
+
+    @property
+    def status(self) -> DayStatus:
+        return self._status
+
+    @property
+    def rules(self) -> list[BaseRule]:
+        return self._rules
         
     
     

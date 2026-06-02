@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class AppointmentType(BaseModel):
+@dataclass(frozen=True)
+class AppointmentType:
     name: str
     duration: int
     description: str

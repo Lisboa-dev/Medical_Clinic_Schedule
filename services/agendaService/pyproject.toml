@@ -15,6 +15,8 @@ dependencies = [
     "psycopg2 (>=2.9.11,<3.0.0)",
     "testcontainers (>=4.14.2,<5.0.0)",
     "aio-pika (>=9.6.2,<10.0.0)",
+    "redis (>=7.4.0,<8.0.0)",
+    "ddtrace (>=4.0.0,<5.0.0)",
 ]
 
 [dependency-groups]
@@ -26,7 +28,9 @@ dev = [
 
 [tool.poetry]
 name = "agenda"
-packages = [{include ="src"}]
+packages = [
+  { include = "modules", from = "src" }
+]
 
 
 [build-system]
@@ -42,3 +46,11 @@ start = "src.API.server:main"
 start2 = "uvicorn src.API.server:app --reload"
 check = "mypy ."
 test = "pytest"
+
+
+
+[tool.mypy]
+python_version = "3.11"
+mypy_path = "$MYPY_CONFIG_FILE_DIR/src"
+explicit_package_bases = true
+namespace_packages = true

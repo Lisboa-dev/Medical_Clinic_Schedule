@@ -1,7 +1,8 @@
-from pydantic import BaseModel
+from dataclasses import dataclass
 
 
-class CreateAppointmentCommand(BaseModel):
+@dataclass(frozen=True)
+class CreateAppointmentCommand:
     scheduler_id: str
     date:str
     weekday:str
@@ -9,10 +10,26 @@ class CreateAppointmentCommand(BaseModel):
     patient:str
     time:str
     type:str
+    room: str | None = None
     
     
-class DeleteAppointmentCommand(BaseModel):
+@dataclass(frozen=True)
+class DeleteAppointmentCommand:
     id: str
     
-class UpdateAppointmentCommand(BaseModel):
+@dataclass(frozen=True)
+class UpdateAppointmentCommand:
     id: str
+
+@dataclass(frozen=True)
+class UpdateAppointmentDateCommand:
+    id: str
+    nome:str 
+    time:str
+    date:str
+    
+@dataclass(frozen=True)
+class CreateAppointmentTypeCommand:
+    name: str
+    duration: int
+    description: str 

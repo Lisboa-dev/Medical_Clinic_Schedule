@@ -7,6 +7,6 @@ from src.modules.agenda.aplication.dtos.repositorys.output.AppointmentScheduling
 class AppointmentSchedulingRepositoryPort (ABC):
    
     @abstractmethod
-    def getContext(self, appointmentScheduling: AppointmentSchedulingInputDTO) -> AppointmentSchedulingOutputDTO:
+    async def getContext(self, appointmentScheduling: AppointmentSchedulingInputDTO) -> AppointmentSchedulingOutputDTO:
        pass
    

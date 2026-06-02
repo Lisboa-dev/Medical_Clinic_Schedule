@@ -1,14 +1,22 @@
 
 from abc import ABC, abstractmethod
+from typing import Any
+from src.modules.agenda.domain.entities.Patient import Patient
 
 class PatientRepositoryPort(ABC):
     @abstractmethod
-    def save(self, patient:Patient) -> None:
+    async def save(self, patient: Patient) -> None:
         pass
     
     @abstractmethod
-    def update(self, patient:Patient) ->None:
+    async def update(self, patient: Patient) -> None:
         pass
     
-    def delete(self, patient_id:str) -> None:
+    async def delete(self, patient_id: str) -> None:
         pass
+
+    async def getPacient(self, patient_id: str) -> Any:
+        pass
+
+    async def getPatient(self, patient_id: str) -> Any:
+        return await self.getPacient(patient_id)

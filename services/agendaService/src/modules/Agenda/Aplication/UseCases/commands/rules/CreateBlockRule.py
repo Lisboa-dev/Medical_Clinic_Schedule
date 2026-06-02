@@ -1,21 +1,34 @@
+from src.modules.agenda.aplication.dtos.exceptions import CreateUseCaseException
+from src.modules.agenda.aplication.dtos.useCase.command.RulesUseCasesDTO import CreateBlockRuleCommand
+from src.modules.agenda.aplication.events.RuleEvent import CreateBlockRuleEvent
 from src.modules.agenda.aplication.ports.events.BusPort import BusPort
-from src.modules.agenda.domain.rules.BlockRule import BlockRuleRoom
+from src.modules.agenda.aplication.ports.repository import RuleRepositoryPort
+from src.modules.agenda.domain.rules.BlockRule import BlockRule
 
-class CreateBlockRuleRoomUseCase:
+
+class CreateBlockRuleUseCase:
     def __init__(self, repository: RuleRepositoryPort, bus: BusPort):
         self._repository = repository
         self._bus = bus
-        
-    async def execute(self, command: CreateBlockRuleRoomCommand) -> bool:
+
+    async def execute(self, command: CreateBlockRuleCommand) -> bool:
         try:
-            rule = BlockRuleRoom(ruleEffect=command.ruleEffect, date=command.date, weekday=command.weekday, description=command.description)
-            
-            if(isinstance(rule, BlockRuleRoom)):
-                await self._repository.save(rule)
-                await self._bus.emit()
-                return rule
-            
-            return 
+            rule = BlockRule(
+                date=command.date,  # type: ignore[arg-type]
+                weekday=command.weekday,
+                description=command.description,
+                target=command.target,
+                targetType=command.targetType,  # type: ignore[arg-type]
+                nome=command.nome,
+            )
+            await self._repository.save(rule)
+            self._bus.emit(CreateBlockRuleEvent(rule))
+            return True
         except Exception as e:
-            raise ("Exception in creating rule: ", e)
-        
+            raise CreateUseCaseException(
+                code="CREATE_BLOCK_RULE_ERROR",
+                message="Error creating block rule",
+                use_case=self.__class__.__name__,
+                context={"command": str(command)},
+                original=e,
+            ) from e

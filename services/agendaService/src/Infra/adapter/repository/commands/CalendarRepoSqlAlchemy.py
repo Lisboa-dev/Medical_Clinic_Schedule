@@ -1,41 +1,50 @@
-from typing import List, Optional
-from ...mapper.CalendarMapper import CalendarMapper 
+from src.infra.adapter.repository.base import SQLiteRepository
+from src.modules.agenda.domain.entities import Day
 
-class CalendarRepository():
-    def __init__(self):
-        self.agendas = []
-        self.counter = 1
 
-    def create(self, agenda: ) -> :
-        new_agenda = (id=self.counter, **agenda.dict())
-        self.agendas.append(new_agenda)
-        self.counter += 1
-        return new_agenda
+class CalendarRepository(SQLiteRepository):
+    async def save(self, calendar) -> None:
+        day = calendar
+        data = self._load(self._dump(day))
+        date = data.get("date", {})
+        day_id = str(data.get("id") or f"{date.get('year')}-{date.get('month')}-{date.get('day')}")
+        with self._db.connect() as connection:
+            connection.execute(
+                """
+                INSERT INTO days (id, year, month, day, weekday, data, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(id) DO UPDATE SET
+                    year = excluded.year,
+                    month = excluded.month,
+                    day = excluded.day,
+                    weekday = excluded.weekday,
+                    data = excluded.data,
+                    updated_at = CURRENT_TIMESTAMP
+                """,
+                (
+                    day_id,
+                    int(date.get("year", 0)),
+                    int(date.get("month", 0)),
+                    int(date.get("day", 0)),
+                    int(data.get("weekday", 0)),
+                    self._dump(day),
+                ),
+            )
+        await self._cache_entity("days", day_id, day)
 
-    def list_all(self) -> List[]:
-        return self.agendas
+    async def update(self, calendar) -> None:
+        await self.save(calendar)
 
-    def get_by_id(self, agenda_id: int) -> Optional[]:
-        for agenda in self.agendas:
-            if agenda.id == agenda_id:
-                return agenda
-        return None
+    async def updateDay(self, day: Day) -> None:
+        await self.save(day)
 
-    def update(self, agenda_id: int, agenda: ) -> Optional[]:
-        existing = self.get_by_id(agenda_id)
-        if not existing:
-            return None
+    async def get(self, day_id: str):
+        return await self._fetch_json_cached("days", day_id)
 
-        updated_data = agenda.dict(exclude_unset=True)
-        for key, value in updated_data.items():
-            setattr(existing, key, value)
-
-        return existing
-
-    def delete(self, agenda_id: int) -> bool:
-        existing = self.get_by_id(agenda_id)
-        if not existing:
-            return False
-
-        self.agendas.remove(existing)
-        return True
+    async def delete(self, ano: str | int | None = None) -> None:
+        with self._db.connect() as connection:
+            if ano is None:
+                connection.execute("DELETE FROM days")
+            else:
+                connection.execute("DELETE FROM days WHERE year = ?", (int(ano),))
+        await self._redis.delete_pattern(self._list_cache_key("days", "*"))

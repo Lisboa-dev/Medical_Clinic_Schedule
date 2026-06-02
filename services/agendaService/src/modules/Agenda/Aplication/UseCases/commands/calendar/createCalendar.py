@@ -1,9 +1,17 @@
-
+from dataclasses import dataclass
+from src.modules.agenda.aplication.dtos.exceptions import CreateUseCaseException
 from src.modules.agenda.aplication.ports.events.BusPort import BusPort
+from src.modules.agenda.aplication.events.CalendarEvent import CreateCalendarEvent
 from src.modules.agenda.aplication.ports.externServices.CalendarDataPort import CalendarDataPort
 from src.modules.agenda.aplication.ports.repository import RuleRepositoryPoty
 from src.modules.agenda.aplication.ports.repository.CalendarRepositoryPort import CalendarRepositoryPort
 from src.modules.agenda.domain.entities import Day
+
+
+@dataclass(frozen=True)
+class CreateCalendarCommand:
+    day: int
+    ano: int
 
 
 class CreateCalendarUseCase:
@@ -19,7 +27,7 @@ class CreateCalendarUseCase:
         self._repositoryCalendar = repositoryCalendar
         self._repositoryRule = repositoryRule
         self._baseData = baseData
-        self_bus = bus
+        self._bus = bus
 
 
     async def execute(self, command: CreateCalendarCommand):
@@ -29,21 +37,34 @@ class CreateCalendarUseCase:
             
             if(data and rules):
                 
+                days = []
                 for d in data:
                     
                     try:
                         day = Day(**d)
                         day.addRules(rules)
-                        await self._repository.save(day)
+                        await self._repositoryCalendar.save(day)
+                        days.append(day)
                     except:
-                        await self._repository.delete(d['ano'])
-                        raise Exception("error ao criar day", d)
-                await self._bus.publish()
+                        await self._repositoryCalendar.delete(d['ano'])
+                        raise CreateUseCaseException(
+                            code="CREATE_CALENDAR_DAY_ERROR",
+                            message="Error creating calendar day",
+                            use_case=self.__class__.__name__,
+                            context={"day": str(d)},
+                        )
+                self._bus.emit(CreateCalendarEvent(days=days, year=str(command.ano)))
                 return True
             
         except Exception as e:
-            await self._repository.delete(command.ano)
-            raise Exception("error ao criar day", command)
+            await self._repositoryCalendar.delete(command.ano)
+            raise CreateUseCaseException(
+                code="CREATE_CALENDAR_ERROR",
+                message="Error creating calendar",
+                use_case=self.__class__.__name__,
+                context={"command": str(command)},
+                original=e,
+            ) from e
       
    
        

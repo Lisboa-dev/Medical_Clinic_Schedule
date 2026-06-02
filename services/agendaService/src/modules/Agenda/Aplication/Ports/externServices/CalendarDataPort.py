@@ -8,3 +8,6 @@ class CalendarDataPort(ABC):
     @abstractmethod
     def pullData(self) -> list[BaseRule]:
         pass
+
+    async def mont(self, mes: int | str, ano: int | str) -> list[dict]:
+        return []

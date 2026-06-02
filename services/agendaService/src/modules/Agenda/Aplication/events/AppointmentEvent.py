@@ -1,28 +1,23 @@
-class CreateAppointmentEvent:
-    def __init__(self, patient: str, doctor: str, room: str, type: str, time: str):
-        self.patient = patient
-        self.doctor = doctor
-        self.room = room
-        self.type = type
-        self.time = time
-        
+from dataclasses import dataclass
 
+from src.modules.agenda.domain.entities import Appointment
+
+
+@dataclass(frozen=True)
+class CreateAppointmentEvent:
+    appointment: Appointment
+
+
+@dataclass(frozen=True)
 class UpdateAppointmentEvent:
-    def __init__(self, id: str, patient: str, doctor: str, room: str, type: str, time: str):
-        self.id = id
-        self.patient = patient
-        self.doctor = doctor
-        self.room = room
-        self.type = type
-        self.time = time
-        
-        
+    appointment: Appointment
+
+
+@dataclass(frozen=True)
 class DeleteAppointmentEvent:
-    def __init__(self, id: str):
-        self.id = id
-        
-        
-        
+    appointment_id: str
+
+
+@dataclass(frozen=True)
 class CancelAppointmentEvent:
-    def __init__(self, id: str):
-        self.id = id
+    appointment_id: str
