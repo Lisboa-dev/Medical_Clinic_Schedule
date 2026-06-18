@@ -3,12 +3,14 @@ from fastapi.responses import JSONResponse
 
 from src.api.interfaces.infra import InfraEventRequest
 from src.api.provider import (
+    get_event_bus,
     get_infra_health_handler,
     get_user_service_doctor_created_handler,
     get_user_service_doctor_deleted_handler,
     get_user_service_patient_created_handler,
     get_user_service_patient_deleted_handler,
 )
+from src.infra.adapter.Messaging import InMemoryEventBus
 from src.infra.handlers import (
     InfraHealthHandler,
     UserServiceDoctorCreatedHandler,
@@ -62,3 +64,20 @@ async def handle_user_service_patient_deleted(
     handler: UserServicePatientDeletedHandler = Depends(get_user_service_patient_deleted_handler),
 ):
     return await handler.handle(payload.to_payload())
+
+
+@routerInfra.post("/webhooks/events")
+@routerInfra.post("/events")
+async def handle_state_event_webhook(
+    payload: InfraEventRequest,
+    event_bus: InMemoryEventBus = Depends(get_event_bus),
+):
+    event_payload = payload.to_payload()
+    event_name = payload.event or event_payload.get("routing_key") or "agenda.state.changed"
+    data = event_payload.get("data") or {
+        key: value
+        for key, value in event_payload.items()
+        if key not in {"event", "routing_key", "data"}
+    }
+    published = await event_bus.publish(event_name, data, routing_key=str(event_name))
+    return {"status": "accepted", "event": published["event"], "data": published["data"]}

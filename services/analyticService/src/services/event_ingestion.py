@@ -16,6 +16,7 @@ except ModuleNotFoundError:
     Counter = _NoopCounter
 
 from src.infra.database import EventLogRepository
+from src.infra.websocket import WebSocketHub, events_hub
 
 EVENTS_INGESTED = Counter(
     "analytic_events_ingested_total",
@@ -25,8 +26,9 @@ EVENTS_INGESTED = Counter(
 
 
 class EventIngestionService:
-    def __init__(self, repository: EventLogRepository) -> None:
+    def __init__(self, repository: EventLogRepository, hub: WebSocketHub | None = None) -> None:
         self.repository = repository
+        self.hub = hub or events_hub
 
     async def ingest(self, payload: dict[str, Any], routing_key: str) -> None:
         saved = self.repository.save(payload, routing_key)
@@ -34,6 +36,13 @@ class EventIngestionService:
             source_service=saved["source_service"],
             routing_key=saved["routing_key"],
         ).inc()
+        await self.hub.broadcast(
+            {
+                "event": "event.ingested",
+                "routing_key": routing_key,
+                "data": saved,
+            }
+        )
 
     def list_recent(self, limit: int = 100) -> list[dict[str, Any]]:
         return self.repository.list_recent(limit=limit)

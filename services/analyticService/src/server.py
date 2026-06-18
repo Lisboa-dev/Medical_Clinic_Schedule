@@ -37,6 +37,8 @@ app = FastAPI(
     openapi_tags=[
         {"name": "health", "description": "Healthcheck do Analytic Service."},
         {"name": "events", "description": "Eventos recentes e agregacoes por source/event."},
+        {"name": "webhooks", "description": "Entrada HTTP para eventos de estado ingeridos pelo analytics."},
+        {"name": "websocket", "description": "Stream websocket de eventos ingeridos em tempo real."},
         {"name": "metrics", "description": "Metricas Prometheus geradas pelo service."},
         {"name": "observability", "description": "Metricas HTTP do service."},
     ],

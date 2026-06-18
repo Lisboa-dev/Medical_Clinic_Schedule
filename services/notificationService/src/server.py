@@ -45,6 +45,7 @@ app = FastAPI(
     openapi_tags=[
         {"name": "health", "description": "Healthcheck do Notification Service."},
         {"name": "notifications", "description": "Consultas, bell summaries, unread count e marcacao de leitura."},
+        {"name": "webhooks", "description": "Entrada HTTP para eventos de estado usados tambem pelos websockets."},
         {"name": "websocket", "description": "Streams websocket para eventos brutos e notificacoes criadas."},
         {"name": "observability", "description": "Metricas Prometheus do service."},
     ],

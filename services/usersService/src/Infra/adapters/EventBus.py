@@ -9,6 +9,7 @@ from src.infra.clients import PrometheusClient, RabbitMQClient, RedisClient
 from src.infra.config.settings import settings
 from src.infra.config.db.liteSql.LiteSql import get_query
 from src.infra.models.sqlAlchemy.UserSqlSchamy import EventLog
+from src.infra.websocket import events_hub
 
 
 logger = logging.getLogger(__name__)
@@ -141,6 +142,11 @@ class PrometheusEventBroadcaster:
         return self._client.ping()
 
 
+class WebSocketEventBroadcaster:
+    async def broadcast(self, payload: dict, routing_key: str) -> None:
+        await events_hub.broadcast({"event": payload.get("event"), "routing_key": routing_key, "data": payload})
+
+
 class BroadcastEventBus:
     def __init__(self, broadcasters: list[EventBroadcaster] | None = None):
         self.memory = InMemoryBroadcaster()
@@ -150,6 +156,7 @@ class BroadcastEventBus:
             RabbitMQEventBroadcaster(),
             RedisEventBroadcaster(),
             PrometheusEventBroadcaster(),
+            WebSocketEventBroadcaster(),
         ]
 
     @property
@@ -164,6 +171,25 @@ class BroadcastEventBus:
 
     def _publish_rabbitmq(self, payload: dict, routing_key: str) -> None:
         asyncio.run(RabbitMQEventBroadcaster().broadcast(payload, routing_key))
+
+    async def publish_payload(self, payload: dict, routing_key: str | None = None) -> dict:
+        event_name = str(payload.get("event") or payload.get("type") or routing_key or "users.state.changed")
+        route = routing_key or str(payload.get("routing_key") or f"users.{event_name.removesuffix('Event').lower()}")
+        data = payload.get("data") or {
+            key: value
+            for key, value in payload.items()
+            if key not in {"event", "routing_key", "data"}
+        }
+        normalized_payload = {
+            "event": event_name,
+            "data": _to_primitive(data),
+        }
+        for broadcaster in self._broadcasters:
+            try:
+                await broadcaster.broadcast(normalized_payload, route)
+            except Exception:
+                logger.exception("failed to broadcast users webhook event through %s", broadcaster.__class__.__name__)
+        return {"routing_key": route, **normalized_payload}
 
     def publish(self, event) -> None:
         payload = _payload(event)

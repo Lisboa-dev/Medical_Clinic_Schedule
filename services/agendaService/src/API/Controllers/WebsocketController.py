@@ -14,3 +14,8 @@ async def websocket_endpoint(websocket: WebSocket, manager=Depends(get_connectio
             await websocket.receive_text()
     except WebSocketDisconnect:
         manager.disconnect(websocket)
+
+
+@router.websocket("/ws/events")
+async def websocket_events_endpoint(websocket: WebSocket, manager=Depends(get_connection_manager)):
+    await websocket_endpoint(websocket, manager)

@@ -1,36 +1,23 @@
 from contextlib import asynccontextmanager
-import asyncio
 from uuid import uuid4
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI
 
-from src.api.controllers import routerAdmins, routerAtendents, routerClientConfig, routerMedics, routerPacients, routerUsersCrud
+from src.api.controllers import (
+    routerAdmins,
+    routerAtendents,
+    routerClientConfig,
+    routerEvents,
+    routerMedics,
+    routerPacients,
+    routerUsersCrud,
+)
 from src.api.provider import UserFactory
 from src.infra.adapters.UserRepositorySqlAlchemy import UserRepository
 from src.infra.config.db.liteSql.LiteSql import get_query, init_db
 from src.infra.models.sqlAlchemy.UserSqlSchamy import CargoEnum, Doctor, Usuario
 from src.observability import setup_observability
 from src.modules.users.domain.valueObjects.PasswordVO import Password
-
-
-class WebSocketHub:
-    def __init__(self):
-        self.connections: list[WebSocket] = []
-
-    async def connect(self, websocket: WebSocket) -> None:
-        await websocket.accept()
-        self.connections.append(websocket)
-
-    def disconnect(self, websocket: WebSocket) -> None:
-        if websocket in self.connections:
-            self.connections.remove(websocket)
-
-    async def broadcast(self, payload: dict) -> None:
-        for websocket in list(self.connections):
-            await websocket.send_json(payload)
-
-
-hub = WebSocketHub()
 
 
 def seed_users() -> None:
@@ -72,11 +59,9 @@ async def lifespan(app: FastAPI):
     init_db()
     seed_users()
     app.state.event_payloads = []
-    loop = asyncio.get_running_loop()
 
     def on_event(payload: dict) -> None:
         app.state.event_payloads.append(payload)
-        loop.create_task(hub.broadcast(payload))
 
     UserFactory.event_bus_factory().subscribe(on_event)
     yield
@@ -97,6 +82,7 @@ app = FastAPI(
         {"name": "atendents", "description": "Criacao, listagem, detalhe e remocao de atendentes."},
         {"name": "pacients", "description": "Criacao, listagem, detalhe e remocao de pacientes."},
         {"name": "config", "description": "Configuracoes client-side, como limites de upload."},
+        {"name": "events", "description": "Webhooks e websocket de eventos de estado do Users Service."},
         {"name": "lookup", "description": "Lookup interno por email ou username para autenticacao."},
         {"name": "observability", "description": "Metricas Prometheus do service."},
     ],
@@ -109,6 +95,7 @@ app.include_router(routerMedics)
 app.include_router(routerPacients)
 app.include_router(routerUsersCrud)
 app.include_router(routerClientConfig)
+app.include_router(routerEvents)
 setup_observability(app, "users-service")
 
 
@@ -135,16 +122,6 @@ def lookup_user(email: str | None = None, name: str | None = None):
             "cargo": _read_value(user.cargo),
         }
     ]
-
-
-@app.websocket("/ws/events")
-async def websocket_events(websocket: WebSocket):
-    await hub.connect(websocket)
-    try:
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        hub.disconnect(websocket)
 
 
 def main():
